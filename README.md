@@ -1,0 +1,1 @@
+Chess project for the odin project curriculum
