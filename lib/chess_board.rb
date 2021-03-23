@@ -24,8 +24,8 @@ class Board
         else
           7
         end
-    @board[i] = Tower.new(i, color)
-    @board[i + 63] = Tower.new(i + 63, color)
+    @board[i] = Rook.new(i, color)
+    @board[i + 63] = Rook.new(i + 63, color)
     @board[i + 9] = Knight.new(i + 9, color)
     @board[i + 54] = Knight.new(i + 54, color)
     @board[i + 18] = Bishop.new(i + 18, color)
