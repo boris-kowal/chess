@@ -3,6 +3,8 @@ require 'colorize'
 require 'pry'
 
 class Board
+  attr_accessor :board, :players
+
   def initialize
     @board = Array.new(72)
     @board.each_index do |index|
@@ -24,21 +26,21 @@ class Board
         else
           7
         end
-    @board[i] = Rook.new(i, color)
-    @board[i + 63] = Rook.new(i + 63, color)
-    @board[i + 9] = Knight.new(i + 9, color)
-    @board[i + 54] = Knight.new(i + 54, color)
-    @board[i + 18] = Bishop.new(i + 18, color)
-    @board[i + 45] = Bishop.new(i + 45, color)
-    @board[i + 27] = Queen.new(i + 27, color)
-    @board[i + 36] = King.new(i + 36, color)
+    @board[i] = Rook.new([0, i], color)
+    @board[i + 63] = Rook.new([7, i], color)
+    @board[i + 9] = Knight.new([1, i], color)
+    @board[i + 54] = Knight.new([6, i], color)
+    @board[i + 18] = Bishop.new([2, i], color)
+    @board[i + 45] = Bishop.new([5, i], color)
+    @board[i + 27] = Queen.new([3, i], color)
+    @board[i + 36] = King.new([4, i], color)
     i = if color == 'white'
           0
         else
           5
         end
-    [i + 1, i + 10, i + 19, i + 28, i + 37, i + 46, i + 55, i + 64].each do |j|
-      @board[j] = Pawn.new(j, color)
+    [i + 1, i + 10, i + 19, i + 28, i + 37, i + 46, i + 55, i + 64].each_with_index do |j, index|
+      @board[j] = Pawn.new([index, 1 + i], color)
     end
   end
 
@@ -83,6 +85,44 @@ class Board
       (coordinates[0].ord - 97) * 9 + coordinates[1].to_i - 1
     end
   end
+
+  def find_index_from_array(coordinates)
+    coordinates[0] * 9 + coordinates[1]
+  end
+
+  def find_coordinates_from_index(index)
+    position = Array.new(2)
+    position[0] = index / 9
+    position[1] = index % 9
+    position
+  end
+
+  def find_edges(piece)
+    piece.moves.each do |array|
+      array.each do |position|
+        element = @board[find_index_from_array(position)]
+        if element == "   "
+          piece.edges.push(position)
+        elsif element.color == "white"
+          break
+        else
+          piece.edges.push(position)
+          break
+        end
+      end
+    end
+  end
+      
+
+  # def show_available_moves(node)
+  #   binding.pry
+  #   node.edges.each do |position|
+  #     @board[find_index_from_array(position)] = " \u2022 "
+  #   end
+  # end
+
+  def move_pieces(from, to)
+  end
 end
 
 class Player
@@ -95,4 +135,7 @@ class Player
 end
 
 new_board = Board.new
+new_board.display
+new_board.find_edges(new_board.board[27])
+binding.pry
 new_board.display

@@ -28,5 +28,26 @@ describe Board do
       end
     end
   end
+  describe '#move_pieces' do
+    subject(:move_game) { described_class.new}
+    context 'When moving to an already occupied position' do
+      before do
+        move_game.move_pieces(28, 29)
+        move_game.move_pieces(37, 38)
+      end
+      it 'does not change position' do
+        board = move_game.instance_variable_get(:@board)
+        expect { move_game.move_pieces(18,38) }.not_to (change { board[38] })
+      end
+    end
+    context 'when moving to illegal position' do
+      it 'return nil' do
+      end
+    end
+    context 'when moving to free position' do
+      it 'move the pieces' do
+      end
+    end
+  end
 end
     
