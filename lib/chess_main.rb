@@ -4,6 +4,7 @@ require 'pry'
 class Game
   def initialize
     @new_game = Board.new
+    @players = [Player.new('Player 1', 'white'), Player.new('Player 2', 'black')]
     play
   end
 

@@ -10,9 +10,8 @@ class Board
     @board.each_index do |index|
       @board[index] = EmptyCell.new(find_coordinates_from_index(index))
     end
-      @players = [Player.new('Player 1', 'white'), Player.new('Player 2', 'black')]
-      place_pieces(@players[0].color)
-      place_pieces(@players[1].color)
+      place_pieces('white')
+      place_pieces('black')
   end
 
   # method to place pieces in initial positions
