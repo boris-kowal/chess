@@ -180,8 +180,7 @@ class King < Piece
     @moves = [[position[0], position[1] + 1], [position[0], position[1] - 1],
               [position[0] + 1, position[1]], [position[0] - 1, position[1]],
               [position[0] + 1, position[1] + 1], [position[0] - 1, position[1] - 1],
-              [position[0] - 1, position[1] + 1], [position[0] + 1, position[1] - 1]
-    @edges = []
+              [position[0] - 1, position[1] + 1], [position[0] + 1, position[1] - 1]]
     find_edges
   end
 

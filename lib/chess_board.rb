@@ -97,7 +97,7 @@ class Board
     piece.moves.each do |array|
       array.each do |position|
         element = @board[find_index_from_array(position)]
-        if element == "   "
+        if element.class == EmptyCell
           piece.edges.push(position)
         elsif element.color == "white"
           break
@@ -139,8 +139,8 @@ class Player
   end
 end
 
-new_board = Board.new
-new_board.display
-#new_board.find_edges(new_board.board[28])
-new_board.move_pieces(9, 2)
-new_board.display
+# new_board = Board.new
+# new_board.display
+# #new_board.find_edges(new_board.board[28])
+# new_board.move_pieces(9, 2)
+# new_board.display
