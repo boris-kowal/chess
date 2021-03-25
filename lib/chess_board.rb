@@ -8,15 +8,11 @@ class Board
   def initialize
     @board = Array.new(72)
     @board.each_index do |index|
-      @board[index] = if index.even?
-                        '   '
-                      else
-                        '   '
-                      end
+      @board[index] = EmptyCell.new(find_coordinates_from_index(index))
+    end
       @players = [Player.new('Player 1', 'white'), Player.new('Player 2', 'black')]
       place_pieces(@players[0].color)
       place_pieces(@players[1].color)
-    end
   end
 
   # method to place pieces in initial positions
@@ -112,7 +108,7 @@ class Board
       end
     end
   end
-      
+  
 
   # def show_available_moves(node)
   #   binding.pry
@@ -122,7 +118,16 @@ class Board
   # end
 
   def move_pieces(from, to)
+    origin = @board[from]
+    destination = @board[to]
+    if !origin.edges.include?(destination.position) || destination.color == 'white'
+      puts 'Illegal move'
+    else
+      @board[to] = origin.class.new(find_coordinates_from_index(to), origin.color)
+      @board[from] = EmptyCell.new(origin.position)
+    end
   end
+
 end
 
 class Player
@@ -136,6 +141,6 @@ end
 
 new_board = Board.new
 new_board.display
-new_board.find_edges(new_board.board[27])
-binding.pry
+#new_board.find_edges(new_board.board[28])
+new_board.move_pieces(9, 2)
 new_board.display

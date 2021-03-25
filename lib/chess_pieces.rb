@@ -1,3 +1,5 @@
+require 'colorize'
+
 class Piece
   attr_accessor :position, :moves, :color, :edges
 
@@ -11,6 +13,7 @@ class Piece
   def to_s
     @symbol
   end
+
 
   def diagonal_moves_right(position)
     diagonal_right_up = []
@@ -85,6 +88,13 @@ class Piece
   end
 end
 
+class EmptyCell < Piece
+  def initialize(position)
+    @position = position
+    @symbol = "   "
+  end
+end
+
 class Knight < Piece
   attr_accessor :edges
 
@@ -145,13 +155,18 @@ class Queen < Piece
   def initialize(position, color)
     super
     @symbol = if color == 'white'
-                " \u2655 "
+                " \u2655 ".on_white
               else
                 " \u265B "
               end
     @moves = diagonal_moves_right(position) + diagonal_moves_left(position) + vertical_moves(position) + horizontal_moves(position)
     @moves.delete([])
   end
+
+  def update(position)
+    @position = position
+    @moves = diagonal_moves_right(position) + diagonal_moves_left(position) + vertical_moves(position) + horizontal_moves(position)
+  end 
 end
 
 class King < Piece
@@ -162,10 +177,27 @@ class King < Piece
               else
                 " \u265A "
               end
+    @moves = [[position[0], position[1] + 1], [position[0], position[1] - 1],
+              [position[0] + 1, position[1]], [position[0] - 1, position[1]],
+              [position[0] + 1, position[1] + 1], [position[0] - 1, position[1] - 1],
+              [position[0] - 1, position[1] + 1], [position[0] + 1, position[1] - 1]
+    @edges = []
+    find_edges
+  end
+
+  def find_edges
+    @moves.each do |position|
+      if position[0] < 0 || position[0] > 7 || position[1] < 0 || position[1] > 7
+        next
+      else
+        @edges.push(position)
+      end
+    end
   end
 end
 
 class Pawn < Piece
+  attr_accessor :first_round
   def initialize(position, color)
     super(position, color)
     @symbol = if color == 'white'
@@ -173,5 +205,15 @@ class Pawn < Piece
               else
                 " \u265F "
               end
+    @first_round = true
+    @edges = find_edges
+
+  end
+  def find_edges
+    if @first_round == true
+      [[@position[0], @position[1] + 1], [@position[0], @position[1] + 2]]
+    else
+      [[@position[0], @position[1] + 1]] if @position[1] + 1 < 8
+    end
   end
 end
