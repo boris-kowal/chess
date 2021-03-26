@@ -3,11 +3,12 @@ require 'colorize'
 class Piece
   attr_accessor :position, :moves, :color, :edges
 
-  def initialize(position, color)
+  def initialize(position, color, first_round = true)
     @position = position
     @color = color
     @edges = []
     @moves = []
+    @first_round = first_round
   end
 
   def to_s
@@ -86,32 +87,6 @@ class Piece
     vertical_moves_down.delete(position)
     [vertical_moves_up, vertical_moves_down]
   end
-end
-
-class EmptyCell < Piece
-  def initialize(position)
-    @position = position
-    @symbol = "   "
-  end
-end
-
-class Knight < Piece
-  attr_accessor :edges
-
-  def initialize(position, color)
-    super(position, color)
-    @symbol = if color == 'white'
-                " \u2658 "
-              else
-                " \u265E "
-              end
-    @moves = [[position[0] - 2, position[1] - 1], [position[0] - 2, position[1] + 1],
-              [position[0] - 1, position[1] - 2], [position[0] - 1, position[1] + 2],
-              [position[0] + 1, position[1] - 2], [position[0] + 1, position[1] + 2],
-              [position[0] + 2, position[1] - 1], [position[0] + 2, position[1] + 1]]
-    @edges = Array.new(8)
-    find_edges
-  end
 
   def find_edges
     @moves.each_with_index do |_move, i|
@@ -125,9 +100,35 @@ class Knight < Piece
   end
 end
 
+class EmptyCell < Piece
+  def initialize(position)
+    @position = position
+    @symbol = "   "
+  end
+end
+
+class Knight < Piece
+  attr_accessor :edges
+
+  def initialize(position, color, first_round = true)
+    super
+    @symbol = if color == 'white'
+                " \u2658 "
+              else
+                " \u265E "
+              end
+    @moves = [[position[0] - 2, position[1] - 1], [position[0] - 2, position[1] + 1],
+              [position[0] - 1, position[1] - 2], [position[0] - 1, position[1] + 2],
+              [position[0] + 1, position[1] - 2], [position[0] + 1, position[1] + 2],
+              [position[0] + 2, position[1] - 1], [position[0] + 2, position[1] + 1]]
+    @edges = Array.new(8)
+    find_edges
+  end
+end
+
 class Rook < Piece
-  def initialize(position, color)
-    super(position, color)
+  def initialize(position, color, first_round = true)
+    super
     @symbol = if color == 'white'
                 " \u2656 "
               else
@@ -139,8 +140,8 @@ class Rook < Piece
 end
 
 class Bishop < Piece
-  def initialize(position, color)
-    super(position, color)
+  def initialize(position, color, first_round = true)
+    super
     @symbol = if color == 'white'
                 " \u2657 "
               else
@@ -152,7 +153,7 @@ class Bishop < Piece
 end
 
 class Queen < Piece
-  def initialize(position, color)
+  def initialize(position, color, first_round = true)
     super
     @symbol = if color == 'white'
                 " \u2655 ".on_white
@@ -170,8 +171,8 @@ class Queen < Piece
 end
 
 class King < Piece
-  def initialize(position, color)
-    super(position, color)
+  def initialize(position, color, first_round = true)
+    super
     @symbol = if color == 'white'
                 " \u2654 "
               else
@@ -197,22 +198,20 @@ end
 
 class Pawn < Piece
   attr_accessor :first_round
-  def initialize(position, color)
-    super(position, color)
+  def initialize(position, color, first_round = true)
+    super
     @symbol = if color == 'white'
                 " \u2659 "
               else
                 " \u265F "
               end
-    @first_round = true
-    @edges = find_edges
-
+    @moves = find_moves(color)
+    @edges = Array.new(4)
+    find_edges
   end
-  def find_edges
-    if @first_round == true
-      [[@position[0], @position[1] + 1], [@position[0], @position[1] + 2]]
-    else
-      [[@position[0], @position[1] + 1]] if @position[1] + 1 < 8
-    end
+  def find_moves(color)
+    i = color == 'white'? 1 : -1
+    [[@position[0], @position[1] + i], [@position[0], @position[1] + 2 * i],
+     [@position[0] - 1, @position[1] + i], [@position[0] + 1, @position[1] + i]]
   end
 end

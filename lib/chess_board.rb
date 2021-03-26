@@ -98,7 +98,7 @@ class Board
         element = @board[find_index_from_array(position)]
         if element.class == EmptyCell
           piece.edges.push(position)
-        elsif element.color == "white"
+        elsif element.color == piece.color
           break
         else
           piece.edges.push(position)
@@ -107,6 +107,9 @@ class Board
       end
     end
   end
+
+
+
   
 
   # def show_available_moves(node)
@@ -119,10 +122,10 @@ class Board
   def move_pieces(from, to)
     origin = @board[from]
     destination = @board[to]
-    if !origin.edges.include?(destination.position) || destination.color == 'white'
-      puts 'Illegal move'
+    if !origin.edges.include?(destination.position) || destination.color == origin.color
+      'Illegal move'
     else
-      @board[to] = origin.class.new(find_coordinates_from_index(to), origin.color)
+      @board[to] = origin.class.new(find_coordinates_from_index(to), origin.color, false)
       @board[from] = EmptyCell.new(origin.position)
     end
   end
