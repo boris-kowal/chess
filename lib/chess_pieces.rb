@@ -104,6 +104,7 @@ class EmptyCell < Piece
   def initialize(position)
     @position = position
     @symbol = "   "
+    @color = 'none'
   end
 end
 
