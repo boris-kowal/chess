@@ -7,7 +7,6 @@ class Game
     @colors = ['white', 'black']
     @players = [Player.new('Player 1', 'white'), Player.new('Player 2', 'black')]
     @current_player_index = 0
-    find_available_moves
     play
   end
 
@@ -24,28 +23,30 @@ class Game
   end
 
   def play
-    while check?('black') == false
+    until check?
       one_round(player)
       switch_player
+      @new_game.find_available_moves
     end
   end
 
-  def check?(color)
-    other_color = color == 'white' ? 'black' : 'white'
-    flag = false
-    @new_game.board.each do |element|
+  def check?
+    check_color?('white') || check_color?('black')
+  end
+
+  def check_color?(color)
+    @new_game.board.each_value do |element|
       next if element.edges.nil? || element.color == color
       element.edges.each do |position|
-        piece = @new_game.board[@new_game.find_index_from_array(position)]
-        if piece.class == Knight && piece.color == color
-          binding.pry
-          flag = true
+        piece = @new_game.board[position]
+        if piece.class == King && piece.color == color
+          return true
         else
           next
         end
       end
     end
-    flag
+    false
   end
 
 
@@ -55,96 +56,41 @@ class Game
 
   def one_round(player)
     @new_game.display
-    from, to = get_input(player)
+    from = get_input_from(player)
+    while no_move?(@new_game.board[from])
+      print "there is no valid move for this piece. "
+      from = get_input_from(player)
+    end
+    to = get_input_to
     while @new_game.move_pieces(from, to) == 'Illegal move'
       puts 'Illegal move'
       to = get_input_to
     end
     @new_game.display
   end
-  
-  def find_available_moves
-    find_moves('white')
-    find_moves('black')
-  end
-
-  def find_moves(color)
-    @new_game.board.each do |element|
-      if [King, Knight, EmptyCell ].include?(element.class) || element.color != color
-        next
-      elsif element.class == Pawn
-        find_edges_pawn(element)
-      else
-        @new_game.find_edges(element)
-      end
-    end
-  end
-
-  # def find_available_moves(from)
-  #   if [King, Knight].include?(@new_game.board[from].class)
-  #     return
-  #   elsif @new_game.board[from].class == Pawn
-  #     find_edges_pawn(@new_game.board[from])
-  #   else
-  #     @new_game.find_edges(@new_game.board[from])
-  #   end
-  # end
-
-  def find_edges_pawn(piece)
-    i = piece.color == 'white'? 1 : -1
-    index = @new_game.find_index_from_array(piece.position)
-    begin
-      if piece.first_round == false || @new_game.board[index + 2 * i].class != EmptyCell
-        piece.edges.delete(@new_game.board[index + 2 * i].position)
-      end
-      if @new_game.board[index + i].class != EmptyCell
-        piece.edges.delete(@new_game.board[index + i].position)
-        piece.edges.delete(@new_game.board[index + 2 * i].position)
-      end
-      if @new_game.board[index + 10 * i].color != @players[1 - @current_player_index].color
-        piece.edges.delete(@new_game.board[index + 10 * i].position)
-      end
-      if @new_game.board[index - 8 * i].color != @players[1 - @current_player_index].color
-        piece.edges.delete(@new_game.board[index - 8 * i].position)
-      end
-    rescue => exception
-      return
-    end
-  end
-
-  def get_input(player)
-    from = get_input_from(player)
-    find_available_moves
-     while no_move?(@new_game.board[from])
-       puts "There is no valid moves for this piece, please select another one"
-       from = get_input_from(player)
-       find_available_moves
-     end
-    return from, get_input_to
-  end
 
   def get_input_to
     puts 'Enter the position where you want to move'
     input = gets.chomp
-    index = @new_game.find_index(input)
-    while index == nil
+    coordinates = @new_game.find_coordinates(input)
+    while coordinates == nil
       puts 'Enter a valid position'
       input = gets.chomp
-      index = @new_game.find_index(input)
+      coordinates = @new_game.find_coordinates(input)
     end
-    index
+    coordinates
   end
 
   def get_input_from(player)
     puts 'Enter the position of the piece you want to move'
     input = gets.chomp
-    index = @new_game.find_index(input)
-    while index == nil || @new_game.board[index].color != player.color || @new_game.board[index].class == EmptyCell
+    coordinates = @new_game.find_coordinates(input)
+    while coordinates == nil || @new_game.board[coordinates].color != player.color || @new_game.board[coordinates].class == EmptyCell
       puts 'Enter a valid position'
       input = gets.chomp
-      index = @new_game.find_index(input)
+      coordinates = @new_game.find_coordinates(input)
     end
-    index
+    coordinates
   end
 
 end

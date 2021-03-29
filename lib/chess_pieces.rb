@@ -21,7 +21,7 @@ class Piece
     diagonal_right_down = []
     x = position[0]
     y = position[1]
-    until x > 7 || y > 8
+    until x > 7 || y > 7
       diagonal_right_up.push([x, y])
       x += 1
       y += 1
@@ -43,7 +43,7 @@ class Piece
     diagonal_left_down = []
     x = position[0]
     y = position[1]
-    until x < 0 || y > 8
+    until x < 0 || y > 7
       diagonal_left_up.push([x, y])
       x -= 1
       y += 1
@@ -88,12 +88,12 @@ class Piece
     [vertical_moves_up, vertical_moves_down]
   end
 
-  def find_edges
-    @moves.each_with_index do |_move, i|
-      if @moves[i][0] > 7 || @moves[i][0] < 0 || @moves[i][1] > 7 || @moves[i][1] < 0
+  def knight_king_pawn_moves
+    @moves.each do |move|
+      if move[0] > 7 || move[0] < 0 || move[1] > 7 || move[1] < 0
         next
       else
-        @edges[i] = @moves[i]
+        @edges.push(move)
       end
     end
     @edges.delete(nil)
@@ -123,7 +123,7 @@ class Knight < Piece
               [position[0] + 1, position[1] - 2], [position[0] + 1, position[1] + 2],
               [position[0] + 2, position[1] - 1], [position[0] + 2, position[1] + 1]]
     @edges = Array.new(8)
-    find_edges
+    knight_king_pawn_moves
   end
 end
 
@@ -138,6 +138,11 @@ class Rook < Piece
     @moves = vertical_moves(position) + horizontal_moves(position)
     @moves.delete([])
   end
+
+  def update
+    @moves = vertical_moves(@position) + horizontal_moves(@position)
+    @moves.delete([])
+  end
 end
 
 class Bishop < Piece
@@ -148,6 +153,11 @@ class Bishop < Piece
               else
                 " \u265D "
               end
+    @moves = diagonal_moves_right(@position) + diagonal_moves_left(@position)
+    @moves.delete([])
+  end
+
+  def update
     @moves = diagonal_moves_right(position) + diagonal_moves_left(position)
     @moves.delete([])
   end
@@ -165,10 +175,10 @@ class Queen < Piece
     @moves.delete([])
   end
 
-  def update(position)
-    @position = position
-    @moves = diagonal_moves_right(position) + diagonal_moves_left(position) + vertical_moves(position) + horizontal_moves(position)
-  end 
+  def update
+    @moves = diagonal_moves_right(@position) + diagonal_moves_left(@position) + vertical_moves(@position) + horizontal_moves(@position)
+    @moves.delete([])
+  end
 end
 
 class King < Piece
@@ -183,17 +193,7 @@ class King < Piece
               [position[0] + 1, position[1]], [position[0] - 1, position[1]],
               [position[0] + 1, position[1] + 1], [position[0] - 1, position[1] - 1],
               [position[0] - 1, position[1] + 1], [position[0] + 1, position[1] - 1]]
-    find_edges
-  end
-
-  def find_edges
-    @moves.each do |position|
-      if position[0] < 0 || position[0] > 7 || position[1] < 0 || position[1] > 7
-        next
-      else
-        @edges.push(position)
-      end
-    end
+    knight_king_pawn_moves
   end
 end
 
@@ -206,12 +206,18 @@ class Pawn < Piece
               else
                 " \u265F "
               end
-    @moves = find_moves(color)
-    @edges = Array.new(4)
-    find_edges
+    @moves = find_moves
+    @edges = Array.new
+    knight_king_pawn_moves
   end
-  def find_moves(color)
-    i = color == 'white'? 1 : -1
+
+  def update
+    @moves = find_moves
+    knight_king_pawn_moves
+  end
+
+  def find_moves
+    i = @color == 'white'? 1 : -1
     [[@position[0], @position[1] + i], [@position[0], @position[1] + 2 * i],
      [@position[0] - 1, @position[1] + i], [@position[0] + 1, @position[1] + i]]
   end

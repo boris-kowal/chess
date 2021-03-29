@@ -6,12 +6,14 @@ class Board
   attr_accessor :board, :players
 
   def initialize
-    @board = Array.new(72)
-    @board.each_index do |index|
-      @board[index] = EmptyCell.new(find_coordinates_from_index(index))
+    @board = Hash.new
+    for i in 0..7
+      for j in 0..7
+        @board[[i, j]] = EmptyCell.new([i, j])
+      end
     end
-      place_pieces('white')
-      place_pieces('black')
+    place_pieces('white')
+    place_pieces('black')
   end
 
   # method to place pieces in initial positions
@@ -21,21 +23,21 @@ class Board
         else
           7
         end
-    @board[i] = Rook.new([0, i], color)
-    @board[i + 63] = Rook.new([7, i], color)
-    @board[i + 9] = Knight.new([1, i], color)
-    @board[i + 54] = Knight.new([6, i], color)
-    @board[i + 18] = Bishop.new([2, i], color)
-    @board[i + 45] = Bishop.new([5, i], color)
-    @board[i + 27] = Queen.new([3, i], color)
-    @board[i + 36] = King.new([4, i], color)
+    @board[[0, i]] = Rook.new([0, i], color)
+    @board[[7, i]] = Rook.new([7, i], color)
+    @board[[1, i]] = Knight.new([1, i], color)
+    @board[[6, i]] = Knight.new([6, i], color)
+    @board[[2, i]] = Bishop.new([2, i], color)
+    @board[[5, i]] = Bishop.new([5, i], color)
+    @board[[3, i]] = Queen.new([3, i], color)
+    @board[[4, i]] = King.new([4, i], color)
     i = if color == 'white'
           0
         else
           5
         end
-    [i + 1, i + 10, i + 19, i + 28, i + 37, i + 46, i + 55, i + 64].each_with_index do |j, index|
-      @board[j] = Pawn.new([index, 1 + i], color)
+    [0, 1, 2, 3, 4, 5, 6, 7].each do |j|
+      @board[[j, 1 + i]] = Pawn.new([j, 1 + i], color)
     end
   end
 
@@ -45,25 +47,19 @@ class Board
     7.downto(0).each do |i|
       if first_color == 'white'
         print " #{i + 1} "
-        print (@board[i]).to_s.black.on_light_white
-        print (@board[i + 9]).to_s.black.on_light_black
-        print (@board[i + 18]).to_s.black.on_light_white
-        print (@board[i + 27]).to_s.black.on_light_black
-        print (@board[i + 36]).to_s.black.on_light_white
-        print (@board[i + 45]).to_s.black.on_light_black
-        print (@board[i + 54]).to_s.black.on_light_white
-        puts (@board[i + 63]).to_s.black.on_light_black
+        [0, 2, 4, 6].each do |j|
+          print (@board[[j, i]]).to_s.black.on_light_white
+          print (@board[[j + 1, i]]).to_s.black.on_light_black
+        end
+        print "\n"
         first_color = 'black'
       else
         print " #{i + 1} "
-        print (@board[i]).to_s.black.on_light_black
-        print (@board[i + 9]).to_s.black.on_light_white
-        print (@board[i + 18]).to_s.black.on_light_black
-        print (@board[i + 27]).to_s.black.on_light_white
-        print (@board[i + 36]).to_s.black.on_light_black
-        print (@board[i + 45]).to_s.black.on_light_white
-        print (@board[i + 54]).to_s.black.on_light_black
-        puts (@board[i + 63]).to_s.black.on_light_white
+        [0, 2, 4, 6].each do |j|
+          print (@board[[j, i]]).to_s.black.on_light_black
+          print (@board[[j + 1, i]]).to_s.black.on_light_white
+        end
+        print "\n"
         first_color = 'white'
       end
     end
@@ -72,30 +68,20 @@ class Board
   end
 
   # method to translate coordonates(c3 for instance) into index
-  def find_index(coordinates)
-    coordinates = coordinates.split("")
-    if coordinates[0] > 'h' || coordinates[0] < 'a' || coordinates[1] < '1' || coordinates[1] > '8'
-      return nil
+  def find_coordinates(coordinates)
+    coordinates = coordinates.downcase.split("")
+    if !coordinates[0].match(/[a-h]/) || !coordinates[1].match(/[1-8]/)
+      nil
     else
-      (coordinates[0].ord - 97) * 9 + coordinates[1].to_i - 1
+      [coordinates[0].ord - 97, coordinates[1].to_i - 1]
     end
   end
 
-  def find_index_from_array(coordinates)
-    coordinates[0] * 9 + coordinates[1]
-  end
-
-  def find_coordinates_from_index(index)
-    position = Array.new(2)
-    position[0] = index / 9
-    position[1] = index % 9
-    position
-  end
-
-  def find_edges(piece)
+  def find_edges_rook_queen_bishop(piece)
+    piece.update
     piece.moves.each do |array|
       array.each do |position|
-        element = @board[find_index_from_array(position)]
+        element = @board[position]
         if element.class == EmptyCell
           piece.edges.push(position)
         elsif element.color == piece.color
@@ -108,7 +94,45 @@ class Board
     end
   end
 
+  def find_edges_pawn(piece)
+    piece.update
+    i = piece.color == 'white' ? 1 : -1
+    x, y = piece.position[0], piece.position[1]
+    begin
+      if piece.first_round == false || @board[[x, y + 2 * i]].class != EmptyCell
+        piece.edges.delete([x, y + 2 * i])
+      end
+      if @board[[x, y + i]].class != EmptyCell
+        piece.edges.delete([x, y + i])
+        piece.edges.delete([x, y + 2 * i])
+      end
+      if @board[[x + 1, y + i]].class == EmptyCell || (@board[[x + 1, y + i]].class != EmptyCell && @board[[x + 1, y + i]].color == piece.color)
+        piece.edges.delete([x + 1, y + i])
+      end
+      if @board[[x - 1, y + i]].class == EmptyCell || (@board[[x - 1, y + i]].class != EmptyCell && @board[[x - 1, y + i]].color == piece.color)
+        piece.edges.delete([x - 1, y + i])
+      end
+    rescue => exception
+      return
+    end
+  end
 
+  def find_available_moves
+    find_moves('white')
+    find_moves('black')
+  end
+
+  def find_moves(color)
+    @board.each_value do |element|
+      if [King, Knight, EmptyCell].include?(element.class) || element.color != color
+        next
+      elsif element.class == Pawn
+        find_edges_pawn(element)
+      else
+        find_edges_rook_queen_bishop(element)
+      end
+    end
+  end
 
   
 
@@ -125,7 +149,7 @@ class Board
     if !origin.edges.include?(destination.position) || destination.color == origin.color
       'Illegal move'
     else
-      @board[to] = origin.class.new(find_coordinates_from_index(to), origin.color, false)
+      @board[to] = origin.class.new(destination.position, origin.color, false)
       @board[from] = EmptyCell.new(origin.position)
     end
   end
@@ -143,6 +167,6 @@ end
 
 # new_board = Board.new
 # new_board.display
-# #new_board.find_edges(new_board.board[28])
-# new_board.move_pieces(9, 2)
+# find_available_moves
+# new_board.move_pieces([1,1], [1, 3])
 # new_board.display
