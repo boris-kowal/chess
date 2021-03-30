@@ -100,6 +100,13 @@ class Piece
   end
 end
 
+class Block < Piece
+  def initialize(position, color)
+    @position = position
+    @color = color
+  end
+end
+
 class EmptyCell < Piece
   def initialize(position)
     @position = position
@@ -125,6 +132,15 @@ class Knight < Piece
     @edges = Array.new(8)
     knight_king_pawn_moves
   end
+
+  def update
+    @moves = [[@position[0] - 2, @position[1] - 1], [@position[0] - 2, @position[1] + 1],
+              [@position[0] - 1, @position[1] - 2], [@position[0] - 1, @position[1] + 2],
+              [@position[0] + 1, @position[1] - 2], [@position[0] + 1, @position[1] + 2],
+              [@position[0] + 2, @position[1] - 1], [@position[0] + 2, @position[1] + 1]]
+    @edges = Array.new(8)
+    knight_king_pawn_moves
+  end          
 end
 
 class Rook < Piece
@@ -140,6 +156,7 @@ class Rook < Piece
   end
 
   def update
+    @edges = []
     @moves = vertical_moves(@position) + horizontal_moves(@position)
     @moves.delete([])
   end
@@ -158,6 +175,7 @@ class Bishop < Piece
   end
 
   def update
+    @edges = []
     @moves = diagonal_moves_right(position) + diagonal_moves_left(position)
     @moves.delete([])
   end
@@ -176,6 +194,7 @@ class Queen < Piece
   end
 
   def update
+    @edges = []
     @moves = diagonal_moves_right(@position) + diagonal_moves_left(@position) + vertical_moves(@position) + horizontal_moves(@position)
     @moves.delete([])
   end
@@ -195,6 +214,15 @@ class King < Piece
               [position[0] - 1, position[1] + 1], [position[0] + 1, position[1] - 1]]
     knight_king_pawn_moves
   end
+
+  def update
+    @moves = [[@position[0], @position[1] + 1], [@position[0], @position[1] - 1],
+              [@position[0] + 1, @position[1]], [@position[0] - 1, @position[1]],
+              [@position[0] + 1, @position[1] + 1], [@position[0] - 1, @position[1] - 1],
+              [@position[0] - 1, @position[1] + 1], [@position[0] + 1, @position[1] - 1]]
+    @edges = []
+    knight_king_pawn_moves
+  end
 end
 
 class Pawn < Piece
@@ -212,6 +240,7 @@ class Pawn < Piece
   end
 
   def update
+    @edges = []
     @moves = find_moves
     knight_king_pawn_moves
   end

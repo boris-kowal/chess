@@ -69,11 +69,15 @@ class Board
 
   # method to translate coordonates(c3 for instance) into index
   def find_coordinates(coordinates)
-    coordinates = coordinates.downcase.split("")
-    if !coordinates[0].match(/[a-h]/) || !coordinates[1].match(/[1-8]/)
+    begin
+      coordinates = coordinates.downcase.split("")
+      if !coordinates[0].match(/[a-h]/) || !coordinates[1].match(/[1-8]/)
+        nil
+      else
+        [coordinates[0].ord - 97, coordinates[1].to_i - 1]
+      end
+    rescue
       nil
-    else
-      [coordinates[0].ord - 97, coordinates[1].to_i - 1]
     end
   end
 
@@ -117,15 +121,43 @@ class Board
     end
   end
 
+  def find_edges_knight_king(piece)
+    to_remove = []
+    piece.update
+    piece.edges.each do |position|
+      if @board[position].color == piece.color
+        # binding.pry
+        to_remove.push(position)
+      end
+    end
+    piece.edges = piece.edges.difference(to_remove)
+  end
+
   def find_available_moves
     find_moves('white')
     find_moves('black')
   end
 
+  def attacked_squares(color)
+    attacked_squares = Hash.new{|hsh,key| hsh[key] = [] }
+    @board.each_value do |element|
+      if element.class == EmptyCell || element.color != color
+        next
+      else
+        element.edges.each do |position|
+          attacked_squares[element].push(position)
+        end
+      end
+    end
+    attacked_squares
+  end
+
   def find_moves(color)
     @board.each_value do |element|
-      if [King, Knight, EmptyCell].include?(element.class) || element.color != color
+      if element.class == EmptyCell || element.color != color
         next
+      elsif [King, Knight].include?(element.class)
+        find_edges_knight_king(element)
       elsif element.class == Pawn
         find_edges_pawn(element)
       else
@@ -144,15 +176,25 @@ class Board
   # end
 
   def move_pieces(from, to)
-    origin = @board[from]
-    destination = @board[to]
-    if !origin.edges.include?(destination.position) || destination.color == origin.color
+    @origin = @board[from]
+    @destination = @board[to]
+    if !@origin.edges.include?(@destination.position) || @destination.color == @origin.color
       'Illegal move'
     else
-      @board[to] = origin.class.new(destination.position, origin.color, false)
-      @board[from] = EmptyCell.new(origin.position)
+      @board[to] = @origin.class.new(@destination.position, @origin.color, false)
+      @board[from] = EmptyCell.new(@origin.position)
     end
   end
+
+  def reverse_move
+    from = @origin.position
+    to = @destination.position
+    @board[to] = @destination
+    @board[from] = @origin
+    find_available_moves
+  end
+
+    
 
 end
 
@@ -167,6 +209,6 @@ end
 
 # new_board = Board.new
 # new_board.display
-# find_available_moves
-# new_board.move_pieces([1,1], [1, 3])
-# new_board.display
+# new_board.find_available_moves
+# print new_board.attacked_squares('white')
+

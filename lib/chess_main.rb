@@ -1,10 +1,10 @@
-require_relative 'chess_board.rb'
+require_relative 'chess_board'
 require 'pry'
 
 class Game
   def initialize
     @new_game = Board.new
-    @colors = ['white', 'black']
+    @colors = %w[white black]
     @players = [Player.new('Player 1', 'white'), Player.new('Player 2', 'black')]
     @current_player_index = 0
     play
@@ -23,10 +23,18 @@ class Game
   end
 
   def play
-    until check?
+    while check? == false
       one_round(player)
       switch_player
       @new_game.find_available_moves
+    end
+    if checkmate?(@king, @attacker) == true
+      puts 'Checkmate!'
+    else
+      puts 'Check!'
+      one_round(player)
+      switch_player
+      play
     end
   end
 
@@ -34,12 +42,66 @@ class Game
     check_color?('white') || check_color?('black')
   end
 
+  def checkmate?(king, attacker)
+    @new_game.find_available_moves
+    attacked = @new_game.attacked_squares(attacker.color)
+    king.edges.each do |position|
+      if !attacked.has_value?(position)
+        @new_game.move_pieces(king.position, position)
+        @new_game.find_available_moves
+        unless check?
+          @new_game.reverse_move
+          @new_game.find_available_moves
+          return false
+        end
+        @new_game.reverse_move
+        @new_game.find_available_moves
+      else
+        next
+      end
+    end
+    attacked = @new_game.attacked_squares(king.color)
+    attacked.each do |key, value|
+      if value.include?(attacker.position)
+        @new_game.move_pieces(key.position, attacker.position)
+        @new_game.find_available_moves
+        unless check?
+          @new_game.reverse_move
+          @new_game.find_available_moves
+          return false
+        end
+      else
+        next
+      end
+      @new_game.reverse_move
+      @new_game.find_available_moves
+    end
+    attacked.each do |key, array|
+      array.each do |position|
+        @new_game.move_pieces(key.position, position)
+        @new_game.find_moves(attacker.color)
+        if check?
+          @new_game.reverse_move
+          @new_game.find_available_moves
+          next
+        else
+          @new_game.reverse_move
+          return false
+        end
+      end
+    end
+    true
+  end
+
   def check_color?(color)
     @new_game.board.each_value do |element|
       next if element.edges.nil? || element.color == color
+
       element.edges.each do |position|
         piece = @new_game.board[position]
-        if piece.class == King && piece.color == color
+        if piece.instance_of?(King) && piece.color == color
+          @king = piece
+          @attacker = element
           return true
         else
           next
@@ -49,7 +111,6 @@ class Game
     false
   end
 
-
   def no_move?(piece)
     piece.edges.empty?
   end
@@ -58,7 +119,7 @@ class Game
     @new_game.display
     from = get_input_from(player)
     while no_move?(@new_game.board[from])
-      print "there is no valid move for this piece. "
+      print 'there is no valid move for this piece. '
       from = get_input_from(player)
     end
     to = get_input_to
@@ -66,14 +127,19 @@ class Game
       puts 'Illegal move'
       to = get_input_to
     end
-    @new_game.display
+    @new_game.find_available_moves
+    if check_color?(player.color)
+      puts 'Illegal move, you would be in check!'
+      @new_game.reverse_move
+      play
+    end
   end
 
   def get_input_to
     puts 'Enter the position where you want to move'
     input = gets.chomp
     coordinates = @new_game.find_coordinates(input)
-    while coordinates == nil
+    while coordinates.nil?
       puts 'Enter a valid position'
       input = gets.chomp
       coordinates = @new_game.find_coordinates(input)
@@ -85,14 +151,13 @@ class Game
     puts 'Enter the position of the piece you want to move'
     input = gets.chomp
     coordinates = @new_game.find_coordinates(input)
-    while coordinates == nil || @new_game.board[coordinates].color != player.color || @new_game.board[coordinates].class == EmptyCell
+    while coordinates.nil? || @new_game.board[coordinates].color != player.color || @new_game.board[coordinates].instance_of?(EmptyCell)
       puts 'Enter a valid position'
       input = gets.chomp
       coordinates = @new_game.find_coordinates(input)
     end
     coordinates
   end
-
 end
 
 game = Game.new
