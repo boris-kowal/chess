@@ -3,7 +3,7 @@ require 'colorize'
 require 'pry'
 
 class Board
-  attr_accessor :board, :players
+  attr_accessor :board, :players, :origin, :destination
 
   def initialize
     @board = Hash.new
@@ -198,6 +198,28 @@ class Board
     end
   end
 
+  def promote
+    if (@destination.position[1] == 7 || @destination.position[1] == 0) && @origin.class == Pawn
+      puts "please enter a piece to promote your pawn"
+      puts '[1] Queen'
+      puts '[2] Rook'
+      puts '[3] Bishop'
+      puts '[4] Knight'
+      input = gets.chomp
+      while !input.match(/[1-4]/)
+        puts 'please enter a correct input'
+        input = gets.chomp
+      end
+      ['X', Queen, Rook, Bishop, Knight].each_with_index do |element, index|
+        if index == input.to_i
+          @origin = element.new(@origin.position, @origin.color)
+          return
+        else
+          next
+        end
+      end
+    end
+  end
 
   def move_pieces(from, to)
     @origin = @board[from]
@@ -206,6 +228,7 @@ class Board
       'Illegal move'
     else
       en_passant_move
+      promote
       @board[to] = @origin.class.new(@destination.position, @origin.color, false)
       @board[from] = EmptyCell.new(@origin.position)
     end
