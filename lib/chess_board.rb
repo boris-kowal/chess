@@ -136,6 +136,7 @@ class Board
   def find_available_moves
     find_moves('white')
     find_moves('black')
+    en_passant
   end
 
   def attacked_squares(color)
@@ -175,12 +176,36 @@ class Board
   #   end
   # end
 
+  def en_passant
+    i = @origin.color == 'black'? 1 : -1
+    x, y = @destination.position[0], @destination.position[1]
+    if (@origin.position[1] - @destination.position[1]).abs < 2 && @origin.class == Pawn
+      return
+    else
+      if @board[[x + i, y]].class == Pawn
+        @board[[x + i, y]].edges.push([x, y + i])
+      end
+      if @board[[x - i, y]].class == Pawn
+        @board[[x - i, y]].edges.push([x, y + i])
+      end
+    end
+  end
+
+  def en_passant_move
+    i = @origin.color == 'white'? 1 : -1
+    if @origin.class == Pawn && @destination.position[0] != @origin.position[0] && @destination.class == EmptyCell
+      @board[[@destination.position[0], @destination.position[1] - i]] = EmptyCell.new([@destination.position[0], @destination.position[1] - i])
+    end
+  end
+
+
   def move_pieces(from, to)
     @origin = @board[from]
     @destination = @board[to]
     if !@origin.edges.include?(@destination.position) || @destination.color == @origin.color
       'Illegal move'
     else
+      en_passant_move
       @board[to] = @origin.class.new(@destination.position, @origin.color, false)
       @board[from] = EmptyCell.new(@origin.position)
     end
@@ -211,4 +236,3 @@ end
 # new_board.display
 # new_board.find_available_moves
 # print new_board.attacked_squares('white')
-
