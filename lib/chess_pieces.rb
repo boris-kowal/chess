@@ -1,7 +1,7 @@
 require 'colorize'
 
 class Piece
-  attr_accessor :position, :moves, :color, :edges, :first_round
+  attr_accessor :position, :moves, :color, :edges, :first_round, :symbol
 
   def initialize(position, color, first_round = true)
     @position = position
@@ -111,6 +111,14 @@ class EmptyCell < Piece
   def initialize(position)
     @position = position
     @symbol = "   "
+    @color = 'none'
+  end
+end
+
+class Dot < Piece
+  def initialize(position)
+    @position = position
+    @symbol = " \u00B7 "
     @color = 'none'
   end
 end

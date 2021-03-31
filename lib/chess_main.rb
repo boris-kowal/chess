@@ -1,5 +1,6 @@
 require_relative 'chess_board'
 require 'pry'
+require 'colorize'
 
 class Game
   def initialize
@@ -23,6 +24,7 @@ class Game
   end
 
   def play
+    @new_game.find_available_moves
     while @new_game.check? == false
       one_round(player)
       switch_player
@@ -62,6 +64,29 @@ class Game
     end
   end
 
+  def show_available_moves(piece)
+    @tempo = []
+    piece.edges.each do |element|
+      if @new_game.board[element].class == EmptyCell
+        @tempo.push(@new_game.board[element])
+        @new_game.board[element] = Dot.new(element)
+      else
+        @tempo.push(@new_game.board[element])
+        @new_game.board[element].symbol = '|' + @new_game.board[element].symbol[1] + '|'
+      end
+    end
+  end
+
+  def hide_available_move
+    @tempo.each do |element|
+      if element.class == EmptyCell
+        @new_game.board[element.position] = element
+      else
+        @new_game.board[element.position].symbol = ' ' + @new_game.board[element.position].symbol[1] + ' '
+      end
+    end
+  end
+
   def get_input_to
     puts 'Enter the position where you want to move'
     input = gets.chomp
@@ -71,6 +96,7 @@ class Game
       input = gets.chomp
       coordinates = @new_game.find_coordinates(input)
     end
+    hide_available_move
     coordinates
   end
 
@@ -83,6 +109,8 @@ class Game
       input = gets.chomp
       coordinates = @new_game.find_coordinates(input)
     end
+    show_available_moves(@new_game.board[coordinates])
+    @new_game.display
     coordinates
   end
 end

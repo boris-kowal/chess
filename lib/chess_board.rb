@@ -12,6 +12,8 @@ class Board
         @board[[i, j]] = EmptyCell.new([i, j])
       end
     end
+    @origin = Block.new([0, 0], 'white')
+    @destination = Block.new([0, 0], 'white')
     place_pieces('white')
     place_pieces('black')
   end
@@ -117,7 +119,7 @@ class Board
         piece.edges.delete([x - 1, y + i])
       end
     rescue => exception
-      return
+      piece.edges.delete([x - 1, y + i])
     end
   end
 
@@ -168,15 +170,6 @@ class Board
       end
     end
   end
-
-  
-
-  # def show_available_moves(node)
-  #   binding.pry
-  #   node.edges.each do |position|
-  #     @board[find_index_from_array(position)] = " \u2022 "
-  #   end
-  # end
 
   def en_passant
     i = @origin.color == 'black'? 1 : -1
