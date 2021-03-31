@@ -23,12 +23,12 @@ class Game
   end
 
   def play
-    while check? == false
+    while @new_game.check? == false
       one_round(player)
       switch_player
       @new_game.find_available_moves
     end
-    if checkmate?(@king, @attacker) == true
+    if @new_game.checkmate?(@new_game.king, @new_game.attacker) == true
       puts 'Checkmate!'
     else
       puts 'Check!'
@@ -36,79 +36,6 @@ class Game
       switch_player
       play
     end
-  end
-
-  def check?
-    check_color?('white') || check_color?('black')
-  end
-
-  def checkmate?(king, attacker)
-    @new_game.find_available_moves
-    attacked = @new_game.attacked_squares(attacker.color)
-    king.edges.each do |position|
-      if !attacked.has_value?(position)
-        @new_game.move_pieces(king.position, position)
-        @new_game.find_available_moves
-        unless check?
-          @new_game.reverse_move
-          @new_game.find_available_moves
-          return false
-        end
-        @new_game.reverse_move
-        @new_game.find_available_moves
-      else
-        next
-      end
-    end
-    attacked = @new_game.attacked_squares(king.color)
-    attacked.each do |key, value|
-      if value.include?(attacker.position)
-        @new_game.move_pieces(key.position, attacker.position)
-        @new_game.find_available_moves
-        unless check?
-          @new_game.reverse_move
-          @new_game.find_available_moves
-          return false
-        end
-      else
-        next
-      end
-      @new_game.reverse_move
-      @new_game.find_available_moves
-    end
-    attacked.each do |key, array|
-      array.each do |position|
-        @new_game.move_pieces(key.position, position)
-        @new_game.find_moves(attacker.color)
-        if check?
-          @new_game.reverse_move
-          @new_game.find_available_moves
-          next
-        else
-          @new_game.reverse_move
-          return false
-        end
-      end
-    end
-    true
-  end
-
-  def check_color?(color)
-    @new_game.board.each_value do |element|
-      next if element.edges.nil? || element.color == color
-
-      element.edges.each do |position|
-        piece = @new_game.board[position]
-        if piece.instance_of?(King) && piece.color == color
-          @king = piece
-          @attacker = element
-          return true
-        else
-          next
-        end
-      end
-    end
-    false
   end
 
   def no_move?(piece)
@@ -128,7 +55,7 @@ class Game
       to = get_input_to
     end
     @new_game.find_available_moves
-    if check_color?(player.color)
+    if @new_game.check_color?(player.color)
       puts 'Illegal move, you would be in check!'
       @new_game.reverse_move
       play

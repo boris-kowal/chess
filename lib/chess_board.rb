@@ -3,7 +3,7 @@ require 'colorize'
 require 'pry'
 
 class Board
-  attr_accessor :board, :players, :origin, :destination
+  attr_accessor :board, :players, :origin, :destination, :king, :attacker
 
   def initialize
     @board = Hash.new
@@ -137,6 +137,8 @@ class Board
     find_moves('white')
     find_moves('black')
     en_passant
+    short_castle
+    long_castle
   end
 
   def attacked_squares(color)
@@ -221,6 +223,143 @@ class Board
     end
   end
 
+  def short_castle
+    i = @origin.color == 'black'? 0 : 7
+    if @board[[7, i]].first_round != true || @board[[4, i]].first_round != true || @board[[5, i]].class != EmptyCell || @board[[6, i]].class != EmptyCell || check?
+      nil
+    else
+      @board[[5, i]] = King.new([5, i], @board[[7, i]].color)
+      if check?
+        @board[[5, i]] = EmptyCell.new([5, i])
+        return nil
+      end
+      @board[[5, i]] = EmptyCell.new([5, i])
+      @board[[6, i]] = King.new([6, i], @board[[7, i]].color)
+      if check?
+        @board[[6, i]] = EmptyCell.new([6, i])
+        return nil
+      else
+        @board[[4, i]].edges.push([6, i])
+        @board[[6, i]] = EmptyCell.new([6, i])
+      end
+    end
+  end
+
+  def castle_move
+    i = @origin.color == 'white'? 0 : 7
+    if @origin.class == King && (@destination.position[0] - @origin.position[0]).abs > 1 && @destination.position == [5, i]
+      @board[[5, i]] = Rook.new([5, i], @origin.color, false)
+      @board[[7, i]] = EmptyCell.new([7, i])
+    elsif @origin.class == King && (@destination.position[0] - @origin.position[0]).abs > 1 && @destination.position == [1, i]
+      @board[[3, i]] = Rook.new([3, i], @origin.color, false)
+      @board[[0, i]] = EmptyCell.new([0, i])
+    end
+  end
+
+  def long_castle
+    i = @origin.color == 'black'? 0 : 7
+    if @board[[0, i]].first_round != true || @board[[4, i]].first_round != true || @board[[1, i]].class != EmptyCell || @board[[2, i]].class != EmptyCell || @board[[3, i]].class != EmptyCell || check?
+      nil
+    else
+      @board[[2, i]] = King.new([2, i], @board[[0, i]].color)
+      if check?
+        @board[[2, i]] = EmptyCell.new([2, i])
+        return nil
+      else
+        @board[[2, i]] = EmptyCell.new([2, i])
+      end
+      @board[[3, i]] = King.new([3, i], @board[[0, i]].color)
+      if check?
+        @board[[3, i]] = EmptyCell.new([3, i])
+        return nil
+      else
+        @board[[3, i]] = EmptyCell.new([3, i])
+      end
+      @board[[1, i]] = King.new([1, i], @board[[0, i]].color)
+      if check?
+        @board[[1, i]] = EmptyCell.new([1, i])
+        return nil
+      else
+        @board[[4, i]].edges.push([1, i])
+        @board[[1, i]] = EmptyCell.new([1, i])
+      end
+    end
+  end
+
+  def checkmate?(king, attacker)
+    find_available_moves
+    attacked = attacked_squares(attacker.color)
+    king.edges.each do |position|
+      if !attacked.has_value?(position)
+        move_pieces(king.position, position)
+        find_available_moves
+        unless check?
+          reverse_move
+          find_available_moves
+          return false
+        end
+        reverse_move
+        find_available_moves
+      else
+        next
+      end
+    end
+    attacked = attacked_squares(king.color)
+    attacked.each do |key, value|
+      if value.include?(attacker.position)
+        move_pieces(key.position, attacker.position)
+        find_available_moves
+        unless check?
+          reverse_move
+          find_available_moves
+          return false
+        end
+      else
+        next
+      end
+      reverse_move
+      find_available_moves
+    end
+    attacked.each do |key, array|
+      array.each do |position|
+        move_pieces(key.position, position)
+        find_moves(attacker.color)
+        if check?
+          reverse_move
+          find_available_moves
+          next
+        else
+          reverse_move
+          return false
+        end
+      end
+    end
+    true
+  end
+
+
+  def check?
+    check_color?('white') || check_color?('black')
+  end
+
+  def check_color?(color)
+    @board.each_value do |element|
+      next if element.edges.nil? || element.color == color
+
+      element.edges.each do |position|
+        piece = @board[position]
+        if piece.instance_of?(King) && piece.color == color
+          @king = piece
+          @attacker = element
+          return true
+        else
+          next
+        end
+      end
+    end
+    false
+  end
+
   def move_pieces(from, to)
     @origin = @board[from]
     @destination = @board[to]
@@ -229,6 +368,7 @@ class Board
     else
       en_passant_move
       promote
+      castle_move
       @board[to] = @origin.class.new(@destination.position, @origin.color, false)
       @board[from] = EmptyCell.new(@origin.position)
     end

@@ -1,7 +1,7 @@
 require 'colorize'
 
 class Piece
-  attr_accessor :position, :moves, :color, :edges
+  attr_accessor :position, :moves, :color, :edges, :first_round
 
   def initialize(position, color, first_round = true)
     @position = position
