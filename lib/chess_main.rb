@@ -1,13 +1,17 @@
 require_relative 'chess_board'
 require 'pry'
 require 'colorize'
+require 'yaml'
 
 class Game
+  attr_reader :computer
+
   def initialize
     @new_game = Board.new
     @colors = %w[white black]
     @players = [Player.new('Player 1', 'white'), Player.new('Player 2', 'black')]
     @current_player_index = 0
+    @computer = nil
     choose
   end
 
@@ -27,6 +31,7 @@ class Game
   end
 
   def play_computer
+    @computer = 'on'
     @new_game.find_available_moves
     while @new_game.check? == false
       computer_player
@@ -63,8 +68,27 @@ class Game
     @new_game.move_pieces(key.position, attacked[key][value_index])
   end
 
+  def save_game
+    puts 'Enter a name for your save'
+    filename = gets.chomp
+    yaml = YAML.dump(self)
+    File.open("#{filename}.yaml", 'w+') { |f| f.write(yaml) }
+    puts 'Game saved!'
+    exit
+  end
+
   def load_game
-    puts 'to be coded'
+    puts 'choose which save you want to open'
+    Dir.glob('*.{yaml}').each { |file| puts file[0..-6] }
+    choice = gets.chomp
+    until Dir.glob('*.{yaml}').include?("#{choice}.yaml")
+      puts 'Please enter valid save'
+      choice = gets.chomp
+    end
+    yaml_save = File.read("#{choice}.yaml")
+    save = YAML.load(yaml_save)
+    save.play_computer if save.computer == 'on'
+    save.play_human if save.computer == 'off'
   end
 
   def other_player_index
@@ -80,6 +104,7 @@ class Game
   end
 
   def play_human
+    @computer = 'off'
     @new_game.find_available_moves
     while @new_game.check? == false
       one_round_player
@@ -124,7 +149,7 @@ class Game
   def show_available_moves(piece)
     @tempo = []
     piece.edges.each do |element|
-      if @new_game.board[element].class == EmptyCell
+      if @new_game.board[element].instance_of?(EmptyCell)
         @tempo.push(@new_game.board[element])
         @new_game.board[element] = Dot.new(element)
       else
@@ -136,7 +161,7 @@ class Game
 
   def hide_available_move
     @tempo.each do |element|
-      if element.class == EmptyCell
+      if element.instance_of?(EmptyCell)
         @new_game.board[element.position] = element
       else
         @new_game.board[element.position].symbol = ' ' + @new_game.board[element.position].symbol[1] + ' '
@@ -158,8 +183,9 @@ class Game
   end
 
   def get_input_from
-    puts "#{player.name}, enter the position of the piece you want to move"
+    puts "#{player.name}, enter the position of the piece you want to move or type 's' to save the game"
     input = gets.chomp
+    save_game if input.downcase == 's'
     coordinates = @new_game.find_coordinates(input)
     while coordinates.nil? || @new_game.board[coordinates].color != player.color || @new_game.board[coordinates].instance_of?(EmptyCell)
       puts 'Enter a valid position'.red

@@ -15,7 +15,6 @@ class Piece
     @symbol
   end
 
-
   def diagonal_moves_right(position)
     diagonal_right_up = []
     diagonal_right_down = []
@@ -110,7 +109,7 @@ end
 class EmptyCell < Piece
   def initialize(position)
     @position = position
-    @symbol = "   "
+    @symbol = '   '
     @color = 'none'
   end
 end
@@ -148,7 +147,7 @@ class Knight < Piece
               [@position[0] + 2, @position[1] - 1], [@position[0] + 2, @position[1] + 1]]
     @edges = Array.new(8)
     knight_king_pawn_moves
-  end          
+  end
 end
 
 class Rook < Piece
@@ -235,6 +234,7 @@ end
 
 class Pawn < Piece
   attr_accessor :first_round
+
   def initialize(position, color, first_round = true)
     super
     @symbol = if color == 'white'
@@ -243,7 +243,7 @@ class Pawn < Piece
                 " \u265F "
               end
     @moves = find_moves
-    @edges = Array.new
+    @edges = []
     knight_king_pawn_moves
   end
 
@@ -254,7 +254,7 @@ class Pawn < Piece
   end
 
   def find_moves
-    i = @color == 'white'? 1 : -1
+    i = @color == 'white' ? 1 : -1
     [[@position[0], @position[1] + i], [@position[0], @position[1] + 2 * i],
      [@position[0] - 1, @position[1] + i], [@position[0] + 1, @position[1] + i]]
   end
