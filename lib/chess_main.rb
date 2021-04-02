@@ -43,7 +43,7 @@ class Game
       @new_game.display
     else
       puts 'Check!'.red
-      computer_player
+      one_round_computer
       switch_player
       play_computer
     end
@@ -58,14 +58,20 @@ class Game
   end
 
   def one_round_computer
-    @new_game.display
-    puts 'Computer playing...'.green
-    sleep(1)
+    @new_game.display unless @new_game.check?
+    puts 'Computer playing...'.green unless @new_game.check?
+    sleep(1) unless @new_game.check?
     attacked = @new_game.attacked_squares('black')
     key_index = rand(attacked.keys.length)
     key = attacked.keys[key_index]
     value_index = rand(attacked[key].length)
     @new_game.move_pieces(key.position, attacked[key][value_index])
+    @new_game.find_available_moves
+    puts "#{@new_game.find_position(key.position)} -> #{@new_game.find_position(attacked[key][value_index])}" unless @new_game.check?
+    if @new_game.check_color?(player.color)
+      @new_game.reverse_move
+      @new_game.escape_check(attacked)
+    end
   end
 
   def save_game

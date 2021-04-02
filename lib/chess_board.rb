@@ -81,6 +81,10 @@ class Board
     nil
   end
 
+  def find_position(coordinates)
+    "#{(97 + coordinates[0]).chr}#{coordinates[1] + 1}"
+  end
+
   def find_edges_rook_queen_bishop(piece)
     piece.update
     piece.moves.each do |array|
@@ -159,6 +163,24 @@ class Board
     end
     attacked_squares
   end
+
+  def escape_check(attacked)
+    attacked.each do |key, value|
+      value.each do |position|
+        move_pieces(key.position, position)
+        find_available_moves
+        if !check?
+          puts "#{find_position(@origin.position)} -> #{find_position(@destination.position)}"
+          return
+        else
+          reverse_move
+          find_available_moves
+        end
+      end
+    end
+  end
+
+
 
   def find_moves(color)
     @board.each_value do |element|
@@ -247,14 +269,14 @@ class Board
   def castle_move
     i = @origin.color == 'white' ? 0 : 7
     if @origin.instance_of?(King) && (@destination.position[0] - @origin.position[0]).abs > 1 && @destination.position == [
-      5, i
+      6, i
     ]
       @board[[5, i]] = Rook.new([5, i], @origin.color, false)
       @board[[7, i]] = EmptyCell.new([7, i])
     elsif @origin.instance_of?(King) && (@destination.position[0] - @origin.position[0]).abs > 1 && @destination.position == [
       1, i
     ]
-      @board[[3, i]] = Rook.new([3, i], @origin.color, false)
+      @board[[3, i]] = Rook.new([2, i], @origin.color, false)
       @board[[0, i]] = EmptyCell.new([0, i])
     end
   end
@@ -375,9 +397,9 @@ class Board
     if !@origin.edges.include?(@destination.position) || @destination.color == @origin.color
       'Illegal move'
     else
-      en_passant_move
-      promote
-      castle_move
+      en_passant_move if @origin.class == Pawn
+      promote if @origin.class == Pawn
+      castle_move if @origin.class == King
       @board[to] = @origin.class.new(@destination.position, @origin.color, false)
       @board[from] = EmptyCell.new(@origin.position)
     end
